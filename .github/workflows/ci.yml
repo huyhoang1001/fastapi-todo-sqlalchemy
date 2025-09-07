@@ -40,6 +40,7 @@ jobs:
     
     - name: Run tests
       env:
+        CI: true
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/todoapp_test
         SECRET_KEY: test-secret-key-for-ci
         ALGORITHM: HS256
