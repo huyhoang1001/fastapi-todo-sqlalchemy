@@ -9,6 +9,7 @@ from app.core.security import get_password_hash
 from app.models.user import User
 from app.models.company import Company
 from app.models.task import Task
+from .constants import TEST_PASSWORD, TEST_ADMIN_PASSWORD
 
 # Use PostgreSQL in CI, SQLite locally
 if os.getenv("CI"):
@@ -21,12 +22,14 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="function")
 def db_session():
+    # Create all tables
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.close()
+        # Clean up tables after each test
         Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
@@ -49,7 +52,7 @@ def test_user(db_session):
         username="testuser",
         first_name="Test",
         last_name="User",
-        hashed_password=get_password_hash("testpass123"),
+        hashed_password=get_password_hash(TEST_PASSWORD),
         is_active=True,
         is_admin=False
     )
@@ -65,7 +68,7 @@ def test_admin(db_session):
         username="admin",
         first_name="Admin",
         last_name="User",
-        hashed_password=get_password_hash("admin123"),
+        hashed_password=get_password_hash(TEST_ADMIN_PASSWORD),
         is_active=True,
         is_admin=True
     )
@@ -105,7 +108,7 @@ def test_task(db_session, test_user):
 def auth_headers(client, test_user):
     response = client.post(
         "/auth/login",
-        data={"username": test_user.email, "password": "testpass123"}
+        data={"username": test_user.email, "password": TEST_PASSWORD}
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
@@ -114,7 +117,7 @@ def auth_headers(client, test_user):
 def admin_headers(client, test_admin):
     response = client.post(
         "/auth/login",
-        data={"username": test_admin.email, "password": "admin123"}
+        data={"username": test_admin.email, "password": TEST_ADMIN_PASSWORD}
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
